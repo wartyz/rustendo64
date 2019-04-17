@@ -10,11 +10,12 @@ pub struct Cpu {
     reg_fpr: [f64; NUM_GPR],
     // Contador de programa
     reg_pc: u64,
-    // Para resultados de palabra doble??
+    // Para resultados de multiplicación y división orden alto de palabra doble
     reg_hi: u64,
-    // Para resultados de palabra doble??
+    // Para resultados de multiplicación y división orden bajo de palabra doble??
     reg_lo: u64,
 
+    // 1 bit de registro LLBit Load/Link
     reg_llbit: bool,
     //TODO: Enum type
     //Registro de Implementacion/Revision FCR0
@@ -66,12 +67,16 @@ impl Cpu {
         match opcode {
             0b001111 => {
                 // LUI, Load Upper Immediate en registro rt (numero de registro)
+                // opcode        rt       inmediate
+                // <---->       <---> <----------------->
+                // 001111 00000 XXXXX XXXX XXXX XXXX XXXX
                 println!("We got LUI!");
                 let imm = instruction & 0xffff; // Valor inmediato
                 let rt = (instruction >> 16) & 0b11111;
                 println!("rt: {:#?}", rt);
                 // TODO: Check 32 vs 64 bit mode for sign extend
                 // (currently 32 bit mode is assumed)
+                // GPR(rt) <-  imm << 16 || 0000 0000 0000 0000
                 self.write_reg_gpr(rt as usize, (imm << 16) as u64);
             }
             _ => {
@@ -92,7 +97,8 @@ impl Cpu {
         let addr_bit_values = (virt_addr >> 29) & 0b111;
 
         if addr_bit_values == 0b101 {
-            // kseg1
+            // Nombre de segmento kseg1, Dirección Virtual: 0xA000_0000 hasta 0xBFFF_FFFF
+            // Dirección real 0x0000_0000 hasta 0x1FFF_FFFF (restando a000_0000)
             virt_addr - 0xffff_ffff_a000_0000
         } else {
             // TODO
@@ -100,6 +106,7 @@ impl Cpu {
         }
     }
 
+    /// Escribe en un registro de propósito general
     fn write_reg_gpr(&mut self, index: usize, value: u64) {
         if index != 0 {
             self.reg_gpr[index] = value;
@@ -107,14 +114,15 @@ impl Cpu {
     }
 }
 
-// TODO: Better name?
+/// Configuración parte EP dentro de registro de configuración TODO: Better name?
 #[derive(Debug)]
 enum RegConfigEp {
     D,
-    // TODO: Better name?
+    // D default en cold reset TODO: Better name?
     DxxDxx,
-    // TODO: Better name?
+    // DxxDxx = 2 palabras dobles/ 6 ciclos TODO: Better name?
     RFU,
+    // RFU = Otros
 }
 
 impl Default for RegConfigEp {
@@ -123,14 +131,14 @@ impl Default for RegConfigEp {
     }
 }
 
-// TODO: Better name?
+/// Configuración parte BE dentro de registro de configuración (1 bit) TODO: Better name?
 #[derive(Debug)]
 enum RegConfigBe {
     LittleEndian,
     BigEndian,
 }
 
-// BigEndian por defecto
+/// BigEndian por defecto
 impl Default for RegConfigBe {
     fn default() -> RegConfigBe {
         RegConfigBe::BigEndian
@@ -150,7 +158,7 @@ impl RegConfig {
     }
 }
 
-// Coprocesador
+/// Coprocesador
 #[derive(Debug, Default)]
 struct Cp0 {
     reg_config: RegConfig,

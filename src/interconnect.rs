@@ -1,12 +1,13 @@
+use super::byteorder::{BigEndian, ByteOrder};
+
 use std::fmt;
 
 const PIF_ROM_SIZE: usize = 2048;
 
-const RAM_SIZE: usize = 4 * 1024 * 1024;
+const RAM_SIZE: usize = 4 * 1024 * 1024; // 4 Megas
 
 pub struct Interconnect {
     pif_rom: Vec<u8>,
-
     ram: Vec<u16>,
 }
 
@@ -15,23 +16,26 @@ impl Interconnect {
         Interconnect {
             pif_rom: pif_rom,
 
-            ram: vec![0; RAM_SIZE]
+            ram: vec![0; RAM_SIZE],
         }
     }
 
+    /// Lee de memoria fisica (no virtual)
     pub fn read_word(&self, addr: u32) -> u32 {
         // TODO: Replace constants with useful names
         if addr >= 0x1fc0_0000 && addr < 0x1fc0_07c0 {
             let rel_addr = addr - 0x1fc0_0000;
             // TODO: Check endianness
             // TODO: Check out byteorder crate
-            ((self.pif_rom[rel_addr as usize] as u32) << 24) |
-            ((self.pif_rom[(rel_addr + 1) as usize] as u32) << 16) |
-            ((self.pif_rom[(rel_addr + 2) as usize] as u32) << 8) |
-            (self.pif_rom[(rel_addr + 3) as usize] as u32)
+            // Load a big-endian u32 from byte stream
+//            ((self.pif_rom[(rel_addr + 0) as usize] as u32) << 24) |
+//            ((self.pif_rom[(rel_addr + 1) as usize] as u32) << 16) |
+//            ((self.pif_rom[(rel_addr + 2) as usize] as u32) <<  8) |
+//            ((self.pif_rom[(rel_addr + 3) as usize] as u32) <<  0)
+            BigEndian::read_u32(&self.pif_rom[rel_addr as usize..])
         } else {
             // TODO
-            panic!("Unrecognized address: {:#x}", addr);
+            panic!("Unrecognized physicaladdress: {:#x}", addr);
         }
     }
 }

@@ -1,6 +1,5 @@
-/*
-Es capitulo 1 y capitulo 2
-*/
+// Es capitulo 1 y capitulo 2
+extern crate byteorder;
 
 mod n64;
 mod cpu;
@@ -20,14 +19,16 @@ fn main() {
 
     let mut n64 = n64::N64::new(pif);
     n64.power_on_reset();
-    println!("Before: {:#?}", &n64);
-    n64.run_instruction();
-    println!("After: {:#?}", &n64);
+    loop {
+        println!("N64: {:#?}", &n64);
+        n64.run_instruction(); // Ejecuta solo una instrucción
+    }
 }
 
+/// Lee un fichero y devuelve un vector de u8
 fn read_bin<P: AsRef<Path>>(path: P) -> Vec<u8> {
-    let mut file = fs::File::open(path).unwrap();// Abre fichero
-    let mut file_buf = Vec::new();// Crea un buffer
-    file.read_to_end(&mut file_buf).unwrap();// Lee fichero en buffer
+    let mut file = fs::File::open(path).unwrap(); // Abre fichero
+    let mut file_buf = Vec::new();           // Crea un buffer de u8
+    file.read_to_end(&mut file_buf).unwrap();          // Lee fichero en buffer
     file_buf
 }

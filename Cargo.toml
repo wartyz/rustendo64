@@ -5,3 +5,4 @@ authors = ["zwenderk <zwenderk@hotmail.com>"]
 edition = "2018"
 
 [dependencies]
+byteorder = "0.4.2"
