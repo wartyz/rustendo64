@@ -1,33 +1,32 @@
-
 //****************** RegStatus ************************
 #[derive(Debug, Default)]
 pub struct RegStatus {
-    // CU
+    // CU ,4 bits, Uso de los cuatro coprocesadores, 1-> usable, 0 ->no usable
     coprocessor_usability: [bool; 4],
-    // RP
+    // RP, 1 bit
     low_power: bool,
-    // FR
+    // FR, 1 bit
     additional_fp_regs: bool,
-    // RE
+    // RE, 1 bit
     reverse_endian: bool,
-    // DS
+    // DS, 9 bits
     diagnostic_status: DiagnosticStatus,
-    // IM(7:0)
+    // IM(7:0), 8 bits
     interrupt_mask: InterruptMask,
-    // KX
+    // KX, 1 bit
     kernel_mode_64bit_addressing: bool,
-    // SX
+    // SX, 1 bit
     supervisor_mode_64bit_addressing: bool,
-    // UX
+    // UX, 1 bit
     user_mode_64bit_addressing: bool,
-    // KSU
+    // KSU, 2 bits
     mode: Mode,
-    // ERL
+    // ERL, 1 bit
     error_level: bool,
-    // EXL
+    // EXL, 1 bit
     exception_level: bool,
-    // IE
-    interrupts_enabled: bool
+    // IE, 1 bit
+    interrupts_enabled: bool,
 }
 
 impl From<u32> for RegStatus {
@@ -39,22 +38,22 @@ impl From<u32> for RegStatus {
                 (value & (1 << 30)) != 0,
                 (value & (1 << 31)) != 0],
 
-            low_power:                        (value & (1 << 27)) != 0,
-            additional_fp_regs:               (value & (1 << 26)) != 0,
-            reverse_endian:                   (value & (1 << 25)) != 0,
+            low_power: (value & (1 << 27)) != 0,
+            additional_fp_regs: (value & (1 << 26)) != 0,
+            reverse_endian: (value & (1 << 25)) != 0,
 
             diagnostic_status: value.into(),
             interrupt_mask: value.into(),
 
-            kernel_mode_64bit_addressing:     (value & (1 <<  7)) != 0,
-            supervisor_mode_64bit_addressing: (value & (1 <<  6)) != 0,
-            user_mode_64bit_addressing:       (value & (1 <<  5)) != 0,
+            kernel_mode_64bit_addressing: (value & (1 << 7)) != 0,
+            supervisor_mode_64bit_addressing: (value & (1 << 6)) != 0,
+            user_mode_64bit_addressing: (value & (1 << 5)) != 0,
 
             mode: value.into(),
 
-            error_level:                      (value & (1 <<  2)) != 0,
-            exception_level:                  (value & (1 <<  1)) != 0,
-            interrupts_enabled:               (value & (1 <<  0)) != 0
+            error_level: (value & (1 << 2)) != 0,
+            exception_level: (value & (1 << 1)) != 0,
+            interrupts_enabled: (value & (1 << 0)) != 0,
         }
     }
 }
@@ -64,7 +63,7 @@ impl From<u32> for RegStatus {
 struct DiagnosticStatus {
     // ITS
     instruction_trace_support: bool,
-    // BEV
+    // BEV. Controla la localización de TLB y los vecrores de excepción de proposito general
     // TODO: Better name?
     tlb_general_exception_vector_location: TLBGeneralExceptionVectorLocation,
     // TS
@@ -78,13 +77,13 @@ struct DiagnosticStatus {
 impl From<u32> for DiagnosticStatus {
     fn from(value: u32) -> Self {
         DiagnosticStatus {
-            instruction_trace_support:  (value & (1 << 24)) != 0,
+            instruction_trace_support: (value & (1 << 24)) != 0,
 
             tlb_general_exception_vector_location: value.into(),
 
-            tlb_shutdown:               (value & (1 << 21)) != 0,
+            tlb_shutdown: (value & (1 << 21)) != 0,
             soft_reset_or_nmi_occurred: (value & (1 << 20)) != 0,
-            condition_bit:              (value & (1 << 18)) != 0
+            condition_bit: (value & (1 << 18)) != 0,
         }
     }
 }
@@ -94,7 +93,7 @@ impl From<u32> for DiagnosticStatus {
 #[derive(Debug)]
 enum TLBGeneralExceptionVectorLocation {
     Normal,
-    Bootstrap
+    Bootstrap,
 }
 
 impl Default for TLBGeneralExceptionVectorLocation {
@@ -121,7 +120,7 @@ struct InterruptMask {
     // IM(6:2)
     external_interrupt_write_req: [bool; 5],
     // IM(1:0)
-    software_interrupt_cause_reg: [bool; 2]
+    software_interrupt_cause_reg: [bool; 2],
 }
 
 impl From<u32> for InterruptMask {
@@ -137,8 +136,8 @@ impl From<u32> for InterruptMask {
                 (value & (1 << 14)) != 0],
 
             software_interrupt_cause_reg: [
-                (value & (1 <<  8)) != 0,
-                (value & (1 <<  9)) != 0]
+                (value & (1 << 8)) != 0,
+                (value & (1 << 9)) != 0],
         }
     }
 }
@@ -148,7 +147,7 @@ impl From<u32> for InterruptMask {
 enum Mode {
     Kernel,
     Supervisor,
-    User
+    User,
 }
 
 impl Default for Mode {

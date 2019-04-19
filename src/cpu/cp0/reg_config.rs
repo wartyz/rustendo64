@@ -3,7 +3,7 @@
 pub struct RegConfig {
     // EP
     data_transfer_pattern: DataTransferPattern,
-    // BE
+    // BE (Big Endian por defecto)
     endianness: Endianness,
     cu: bool,
     kseg0_cache_enabled: bool,
@@ -32,8 +32,8 @@ impl From<u32> for RegConfig {
 /* ------------------- DataTransferPattern ------------------------*/
 #[derive(Debug)]
 enum DataTransferPattern {
-    Normal,
     // D
+    Normal,
     DxxDxx,
 }
 

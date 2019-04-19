@@ -25,7 +25,7 @@ pub struct Cpu {
 
     cp0: cp0::Cp0,
 
-    interconnect: interconnect::Interconnect
+    interconnect: interconnect::Interconnect,
 }
 
 // CPU
@@ -42,7 +42,7 @@ impl Cpu {
             reg_fcr31: 0,            // Registro control/status coma flotante
             cp0: cp0::Cp0::default(),
 
-            interconnect: interconnect
+            interconnect: interconnect,
         }
     }
 
@@ -68,25 +68,33 @@ impl Cpu {
         let rt = (instruction >> 16) & 0b11111; // Registro destino (target)
         let imm = instruction & 0xffff; // Valor inmediato
 
+        // rt => reg source, rd => reg destino, rt => reg destino/fuente
+        // Tipo R-> opcode  rs    rt    rd   shamt funct
+        //          XXXXXX XXXXX XXXXX XXXXX XXXXX XXXXXX
+        // Tipo I-> opcode  rs    rt    immediate(imm)
+        //          XXXXXX XXXXX XXXXX XXXXXXXXXXXXXXXX
+        // Tipo J-> opcode        address
+        //          XXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX
+
         match opcode {
             0b001101 => {
-                // ori -> imm OR Registro que dice rs ->registro que dice rt
+                // Tipo I, ori -> imm OR Registro que dice rs ->registro que dice rt
                 let res = self.read_reg_gpr(rs as usize) | (imm as u64);
                 self.write_reg_gpr(rt as usize, res);
-            },
+            }
             0b001111 => {
-                // lui, Load Upper Immediate en registro que dice rt (numero de registro)
-                let value =((imm << 16) as u64);
+                // Tipo I, lui, Load Upper Immediate en registro que dice rt (numero de registro)
+                let value = ((imm << 16) as u64);
                 self.write_reg_gpr(rt as usize, value);
-            },
+            }
             0b010000 => {
                 // mtc0: Ejemplo mtc0 t1, $12 _> carga lo que hay en t1 al registro 12 de C0
                 let rd = (instruction >> 11) & 0b11111;
                 let data = self.read_reg_gpr(rt as usize);
                 self.cp0.write_reg(rd, data);
-            },
+            }
             0b100011 => {
-                // lw
+                // Tipo I, lw // rs = base añadida al offset => dirección virtual hacia reg rt
                 let base = rs;
                 let offset = imm;
 

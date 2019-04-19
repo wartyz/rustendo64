@@ -3,8 +3,9 @@ use super::reg_config;
 
 #[derive(Debug, Default)]
 pub struct Cp0 {
+    // Coprocesador 0
     reg_status: reg_status::RegStatus,
-    reg_config: reg_config::RegConfig
+    reg_config: reg_config::RegConfig,
 }
 
 impl Cp0 {
@@ -14,10 +15,14 @@ impl Cp0 {
 
     pub fn write_reg(&mut self, index: u32, data: u64) {
         match index {
-            // Registro status
-            12 => { self.reg_status = (data as u32).into(); },
-            // Registro config
-            16 => { self.reg_config = (data as u32).into(); },
+            // 12 => Registro status
+            12 => {
+                self.reg_status = (data as u32).into();
+            }
+            // 16=> Registro config
+            16 => {
+                self.reg_config = (data as u32).into();
+            }
             _ => panic!("Unrecognized Cp0 reg: {}, {:#x}", index, data)
         }
     }
