@@ -4,6 +4,8 @@ extern crate byteorder;
 mod n64;
 mod cpu;
 mod interconnect;
+mod mem_map;
+mod rsp;
 
 use std::env;
 use std::fs;
