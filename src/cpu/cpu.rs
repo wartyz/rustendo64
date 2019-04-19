@@ -147,7 +147,7 @@ impl Cpu {
             }
             0b001111 => {
                 // Tipo I, lui, Load Upper Immediate en registro que dice rt (numero de registro)
-                let value = ((imm << 16) as u64);
+                let value = ((imm << 16) as i32) as u64;
                 self.write_reg_gpr(rt as usize, value);
             }
             0b010000 => {
@@ -155,6 +155,19 @@ impl Cpu {
                 let rd = (instruction >> 11) & 0b11111;
                 let data = self.read_reg_gpr(rt as usize);
                 self.cp0.write_reg(rd, data);
+            }
+            0b010100 => {
+                // beql (wrapping_shl hace <<)
+                if self.read_reg_gpr(rs as usize) == self.read_reg_gpr(rt as usize) {
+                    let offset = imm;
+                    let sign_extended_offset =
+                        ((offset as i16) as u64).wrapping_shl(2);
+                    self.reg_pc = self.reg_pc.wrapping_add(sign_extended_offset);
+
+                    // TODO: Split into its own function
+                    // TODO: Don't do delay slot this way :)
+                    self.run_instruction();
+                }
             }
             0b100011 => {
                 // Tipo I, lw // rs = base añadida al offset => dirección virtual hacia reg rt
