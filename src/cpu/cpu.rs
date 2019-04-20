@@ -122,13 +122,23 @@ impl Cpu {
     }
 
     pub fn run_instruction(&mut self) {
-        let instr = Instruction(self.read_word(self.reg_pc));
+        let instr = self.read_instruction(self.reg_pc);
 
-//        //TODO: Check endian
-//        let opcode =  // Opcode 6 bits altos
-//        let rs =  // Registro source
-//        let instr.rt() =  // Registro destino (target)
-//        let imm =  // Valor inmediato
+        println!("reg_pc {:#018X}: {:?}", self.reg_pc, instr);
+
+        self.reg_pc += 4;
+        self.execute_instruction(instr);
+    }
+
+    fn read_instruction(&self, addr: u64) -> Instruction {
+        Instruction(self.read_word(addr))
+    }
+
+    fn execute_instruction(&mut self, instr: Instruction) {
+        //        let opcode =  // Opcode 6 bits altos
+        //        let rs =  // Registro source
+        //        let instr.rt() =  // Registro destino (target)
+        //        let imm =  // Valor inmediato
 
         // instr.rt() => reg source, rd => reg destino, instr.rt() => reg destino/fuente
         // Tipo R-> opcode  rs   instr.rt()    rd   shamt funct
@@ -162,20 +172,20 @@ impl Cpu {
             Beql => {
                 // beql (wrapping_shl hace <<)
                 if self.read_reg_gpr(instr.rs() as usize) == self.read_reg_gpr(instr.rt() as usize) {
-                    //let offset = imm;
+                    let old_pc = self.reg_pc;
+
                     let sign_extended_offset =
                         ((instr.offset() as i16) as u64).wrapping_shl(2);
-                    self.reg_pc = self.reg_pc.wrapping_add(sign_extended_offset);
+                    self.reg_pc =
+                        self.reg_pc.wrapping_add(sign_extended_offset);
 
-                    // TODO: Split into its own function
-                    // TODO: Don't do delay slot this way :)
-                    self.run_instruction();
+                    let delay_slot_instr = self.read_instruction(old_pc);
+                    self.execute_instruction(delay_slot_instr);
                 }
             }
             Lw => {
                 // Tipo I, lw // instr.rs() = base añadida al offset => dirección virtual hacia reg rt
                 let base = instr.rs();
-                //let offset = instr.imm();
 
                 let sign_extended_offset = (instr.offset() as i16) as u64;
                 let virt_addr =
@@ -186,7 +196,7 @@ impl Cpu {
 
             //_ => panic!("Unrecognized instruction: {:#x}", instruction)
         }
-        self.reg_pc += 4;
+        //self.reg_pc += 4;
     }
 
     fn read_word(&self, virt_addr: u64) -> u32 {
