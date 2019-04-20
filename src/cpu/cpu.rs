@@ -157,8 +157,8 @@ impl Cpu {
             }
             Addiu => {
                 // TODO: Handle exception overflow
-                let res = self.read_reg_gpr(instr.rs()).wrapping_add(
-                    instr.imm_sign_extended());
+                let res = self.read_reg_gpr(instr.rs())
+                    .wrapping_add(instr.imm_sign_extended());
                 self.write_reg_gpr(instr.rt(), res);
             }
             Andi => {
@@ -189,7 +189,7 @@ impl Cpu {
                     let old_pc = self.reg_pc;
 
                     let sign_extended_offset =
-                        instr.offset_sign_extended().wrapping_shl(2);
+                        instr.offset_sign_extended() << 2;
                     self.reg_pc =
                         self.reg_pc.wrapping_add(sign_extended_offset);
 

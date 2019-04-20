@@ -8,17 +8,17 @@ const RAM_SIZE: usize = 4 * 1024 * 1024; // 4 Megas
 
 pub struct Interconnect {
     rsp: Rsp,
-    pif_rom: Vec<u8>,
-    ram: Vec<u16>,
+    pif_rom: Box<[u8]>,
+    ram: Box<[u16]>,
 }
 
 impl Interconnect {
-    pub fn new(pif_rom: Vec<u8>) -> Interconnect {
+    pub fn new(pif_rom: Box<[u8]>) -> Interconnect {
         Interconnect {
             rsp: Rsp::default(),
             pif_rom: pif_rom,
-
-            ram: vec![0; RAM_SIZE],
+            // Convierte arreglo a slice de punteros Box
+            ram: vec![0; RAM_SIZE].into_boxed_slice(),
         }
     }
 

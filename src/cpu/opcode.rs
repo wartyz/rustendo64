@@ -8,6 +8,7 @@ enum_from_primitive! { // Devuelve un Option<Self>
         Ori = 0b001101,
 
         Lui = 0b001111,
+
         Mtc0 = 0b010000,
 
         Beql = 0b010100,

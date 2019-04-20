@@ -30,9 +30,9 @@ fn main() {
 }
 
 /// Lee un fichero y devuelve un vector de u8
-fn read_bin<P: AsRef<Path>>(path: P) -> Vec<u8> {
+fn read_bin<P: AsRef<Path>>(path: P) -> Box<[u8]> {
     let mut file = fs::File::open(path).unwrap(); // Abre fichero
     let mut file_buf = Vec::new();           // Crea un buffer de u8
     file.read_to_end(&mut file_buf).unwrap();          // Lee fichero en buffer
-    file_buf
+    file_buf.into_boxed_slice()
 }
