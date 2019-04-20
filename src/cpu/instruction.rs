@@ -36,20 +36,20 @@ impl Instruction {
         self.0 & 0xffff
     }
 
-//    #[inline(always)]
-//    pub fn imm_sign_extended(&self) -> u64 {
-//        (self.imm() as i16) as u64
-//    }
+    #[inline(always)]
+    pub fn imm_sign_extended(&self) -> u64 {
+        (self.imm() as i16) as u64
+    }
 
     #[inline(always)]
     pub fn offset(&self) -> u32 {
         self.imm()
     }
 
-//    #[inline(always)]
-//    pub fn offset_sign_extended(&self) -> u64 {
-//        (self.offset() as i16) as u64
-//    }
+    #[inline(always)]
+    pub fn offset_sign_extended(&self) -> u64 {
+        (self.offset() as i16) as u64
+    }
 }
 
 impl fmt::Debug for Instruction {

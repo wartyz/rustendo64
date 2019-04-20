@@ -1,8 +1,8 @@
 enum_from_primitive! { // Devuelve un Option<Self>
     #[derive(Debug)]
     pub enum Opcode {
-        //Addi = 0b001000,
-        //Addiu = 0b001001,
+        Addi = 0b001000,
+        Addiu = 0b001001,
 
         Andi = 0b001100,
         Ori = 0b001101,
