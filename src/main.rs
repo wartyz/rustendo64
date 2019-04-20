@@ -22,7 +22,7 @@ fn main() {
     let rom = read_bin(rom_file_name); // Lee ROM
 
     let mut n64 = n64::N64::new(pif);
-    n64.power_on_reset();
+    //n64.power_on_reset();
     loop {
         //println!("N64: {:#?}", &n64);
         n64.run_instruction(); // Ejecuta solo una instrucción
@@ -34,5 +34,5 @@ fn read_bin<P: AsRef<Path>>(path: P) -> Box<[u8]> {
     let mut file = fs::File::open(path).unwrap(); // Abre fichero
     let mut file_buf = Vec::new();           // Crea un buffer de u8
     file.read_to_end(&mut file_buf).unwrap();          // Lee fichero en buffer
-    file_buf.into_boxed_slice()
+    file_buf.into_boxed_slice()   // Convierte un Vec en un slice de vectores Box
 }

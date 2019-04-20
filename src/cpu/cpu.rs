@@ -96,7 +96,7 @@ impl Cpu {
         Cpu {
             reg_gpr: [0; NUM_GPR],   // Registros de proposito general
             reg_fpr: [0.0; NUM_GPR], // Registros de coma flotante
-            reg_pc: 0,               // Contador de programa
+            reg_pc: 0xffff_ffff_bfc0_0000, // Contador de programa TODO: move to const,
             reg_hi: 0,               // Registros de multiplicar y dividie
             reg_lo: 0,
             reg_llbit: false,        // Registro Load/Link
@@ -105,14 +105,15 @@ impl Cpu {
             cp0: cp0::Cp0::default(),
 
             interconnect: interconnect,
+
         }
     }
 
-    pub fn power_on_reset(&mut self) {
-        self.cp0.power_on_reset();
-
-        self.reg_pc = 0xffff_ffff_bfc0_0000; // TODO: move to const
-    }
+//    pub fn power_on_reset(&mut self) {
+//        self.cp0.power_on_reset();
+//
+//        //self.reg_pc = 0xffff_ffff_bfc0_0000; // TODO: move to const
+//    }
 
     // TODO: Different interface
     pub fn run(&mut self) {
