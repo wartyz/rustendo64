@@ -1,5 +1,7 @@
-// Es capitulo 1 y capitulo 2
+#[macro_use]
+extern crate enum_primitive;
 extern crate byteorder;
+extern crate num;
 
 mod n64;
 mod cpu;
