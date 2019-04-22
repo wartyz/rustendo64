@@ -7,7 +7,7 @@ use super::instruction::Instruction;
 
 const NUM_GPR: usize = 32; // 32 registros
 
-#[derive(Debug)]
+
 pub struct Cpu {
     // Arreglo de registros de proposito general
     reg_gpr: [u64; NUM_GPR],
@@ -32,63 +32,6 @@ pub struct Cpu {
     interconnect: interconnect::Interconnect,
 }
 
-//// Para presentar adecuadamente los registros, cambio el macro try! por ?
-//impl fmt::Debug for Cpu {
-//    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//        const REGS_PER_LINE: usize = 2;
-//        const REG_NAMES: [&'static str; NUM_GPR] = [
-//            "r0", "at", "v0", "v1", "a0", "a1", "a2", "a3",
-//            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-//            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-//            "t8", "t9", "k0", "k1", "gp", "sp", "s8", "ra",
-//        ];
-//
-//        write!(f, "\nCPU General Purpose Registers:")?;
-//        for reg_num in 0..NUM_GPR {
-//            if (reg_num % REGS_PER_LINE) == 0 {
-//                writeln!(f, "")?;
-//            }
-//            write!(f,
-//                   "{reg_name}/gpr{num:02}: {value:#018X} ",
-//                   num = reg_num,
-//                   reg_name = REG_NAMES[reg_num],
-//                   value = self.reg_gpr[reg_num],
-//            )?;
-//        }
-//
-//        write!(f, "\n\nCPU Floating Point Registers:")?;
-//        for reg_num in 0..NUM_GPR {
-//            if (reg_num % REGS_PER_LINE) == 0 {
-//                writeln!(f, "")?;
-//            }
-//            write!(f,
-//                   "fpr{num:02}: {value:21} ",
-//                   num = reg_num,
-//                   value = self.reg_fpr[reg_num], )?;
-//        }
-//
-//        writeln!(f, "\n\nCPU Special Registers:")?;
-//        writeln!(f,
-//                 "\
-//            reg_pc: {:#018X}\n\
-//            reg_hi: {:#018X}\n\
-//            reg_lo: {:#018X}\n\
-//            reg_llbit: {}\n\
-//            reg_fcr0:  {:#010X}\n\
-//            reg_fcr31: {:#010X}\n\
-//            ",
-//                 self.reg_pc,
-//                 self.reg_hi,
-//                 self.reg_lo,
-//                 self.reg_llbit,
-//                 self.reg_fcr0,
-//                 self.reg_fcr31
-//        )?;
-//
-//        writeln!(f, "{:#?}", self.cp0)?;
-//        writeln!(f, "{:#?}", self.interconnect)
-//    }
-//}
 
 // CPU
 impl Cpu {
@@ -105,15 +48,8 @@ impl Cpu {
             cp0: cp0::Cp0::default(),
 
             interconnect: interconnect,
-
         }
     }
-
-//    pub fn power_on_reset(&mut self) {
-//        self.cp0.power_on_reset();
-//
-//        //self.reg_pc = 0xffff_ffff_bfc0_0000; // TODO: move to const
-//    }
 
     // TODO: Different interface
     pub fn run(&mut self) {
@@ -142,66 +78,60 @@ impl Cpu {
         //        let imm =  // Valor inmediato
 
         // instr.rt() => reg source, rd => reg destino, instr.rt() => reg destino/fuente
-        // Tipo R-> opcode  rs   instr.rt()    rd   shamt funct
-        //          XXXXXX XXXXX XXXXX         XXXXX XXXXX XXXXXX
-        // Tipo I-> opcode  rs    instr.rt()    immediate(imm)
-        //          XXXXXX XXXXX XXXXX          XXXXXXXXXXXXXXXX
+        // Tipo R-> opcode  rs   instr.rt()   rd   shamt funct
+        //          XXXXXX XXXXX   XXXXX     XXXXX XXXXX XXXXXX
+        // Tipo I-> opcode  rs    instr.rt()   immediate(imm)
+        //          XXXXXX XXXXX   XXXXX      XXXXXXXXXXXXXXXX
         // Tipo J-> opcode        address
         //          XXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX
 
         match instr.opcode() {
+            // Tipo I, R[rt] = R[rs] + SignExtImm
             Addi => {
                 // TODO: Handle exception overflow
                 let res =
                     self.read_reg_gpr(instr.rs()) + instr.imm_sign_extended();
                 self.write_reg_gpr(instr.rt(), res);
             }
+            // Tipo I, R[rt] = R[rs] + SignExtImm
             Addiu => {
                 // TODO: Handle exception overflow
                 let res = self.read_reg_gpr(instr.rs())
                     .wrapping_add(instr.imm_sign_extended());
                 self.write_reg_gpr(instr.rt(), res);
             }
+            // Tipo I, R[rt] = R[rs] & ZeroExtImm
             Andi => {
-                // Tipo I, andi-> instr.imm() AND registro que dice instr.rs() ->registro que dice instr.rt()
                 let res = self.read_reg_gpr(instr.rs()) &
                     (instr.imm() as u64);
                 self.write_reg_gpr(instr.rt(), res);
             }
+            // Tipo I, R[rt] = R[rs] | ZeroExtImm
             Ori => {
-                // Tipo I, ori -> instr.imm() OR registro que dice instr.rs() ->registro que dice instr.rt()
                 let res = self.read_reg_gpr(instr.rs()) |
                     (instr.imm() as u64);
                 self.write_reg_gpr(instr.rt(), res);
             }
+            // Tipo I, R[rt] = {imm, 16'b0}
             Lui => {
-                // Tipo I, lui, Load Upper Immediate en registro que dice instr.rt() (numero de registro)
                 let value = ((instr.imm() << 16) as i32) as u64;
                 self.write_reg_gpr(instr.rt(), value);
             }
+            // mtc0: El contenido del registro rt se carga en el registro rd de CP0
             Mtc0 => {
-                // mtc0: Ejemplo mtc0 t1, $12 _> carga lo que hay en t1 al registro 12 de C0
                 let data = self.read_reg_gpr(instr.rt());
                 self.cp0.write_reg(instr.rd(), data);
             }
-            Beql => {
-                // beql (wrapping_shl hace << ciclico, lo que sale por la iz entra por la der)
-                if self.read_reg_gpr(instr.rs()) == self.read_reg_gpr(instr.rt()) {
-                    let old_pc = self.reg_pc;
 
-                    let sign_extended_offset =
-                        instr.offset_sign_extended() << 2;
-                    self.reg_pc =
-                        self.reg_pc.wrapping_add(sign_extended_offset);
+            Bne => { self.branch(instr, |rs, rt| rs != rt); }
+            // Tipo I, if(R[rs] == R[rt] -> PC = PC + 4 + BranchAddr
+            Beql => self.branch_likely(instr, |rs, rt| rs == rt),
 
-                    let delay_slot_instr = self.read_instruction(old_pc);
-                    self.execute_instruction(delay_slot_instr);
-                } else {
-                    self.reg_pc = self.reg_pc.wrapping_add(4);
-                }
-            }
+            // Tipo I, if(R[rs] != R[rt] -> PC = PC + 4 + BranchAddr
+            Bnel => self.branch_likely(instr, |rs, rt| rs != rt),
+
+            // Tipo I, R[rt] = M[R[rs]+SignExtImm]
             Lw => {
-                // Tipo I, lw // instr.rs() = base añadida al offset => dirección virtual hacia reg rt
                 let base = instr.rs();
 
                 let sign_extended_offset = instr.offset_sign_extended();
@@ -210,16 +140,59 @@ impl Cpu {
                 let mem = (self.read_word(virt_addr) as i32) as u64;
                 self.write_reg_gpr(instr.rt(), mem);
             }
+            // Tipo I, M[R[rs]+SignExtImm] = R[rt]
+            Sw => {
+                let base = instr.rs();
 
-            //_ => panic!("Unrecognized instruction: {:#x}", instruction)
+                let sign_extended_offset = instr.offset_sign_extended();
+                let virt_addr =
+                    self.read_reg_gpr(base as usize).wrapping_add(sign_extended_offset);
+
+                let mem = self.read_reg_gpr(instr.rt()) as u32;
+                self.write_word(virt_addr, mem)
+            }
         }
-        //self.reg_pc += 4;
+    }
+
+
+    fn branch<F>(&mut self, instr: Instruction, f: F) -> bool
+        where F: FnOnce(u64, u64) -> bool {
+        let rs = self.read_reg_gpr(instr.rs());
+        let rt = self.read_reg_gpr(instr.rt());
+        let is_taken = f(rs, rt);
+
+        if is_taken {
+            let old_pc = self.reg_pc;
+
+            let sign_extended_offset =
+                instr.offset_sign_extended() << 2;
+            // Update PC before executing delay slot instruction
+            self.reg_pc =
+                self.reg_pc.wrapping_add(sign_extended_offset);
+
+            let delay_slot_instr = self.read_instruction(old_pc);
+            self.execute_instruction(delay_slot_instr);
+        }
+
+        is_taken
+    }
+
+    fn branch_likely<F>(&mut self, instr: Instruction, f: F)
+        where F: FnOnce(u64, u64) -> bool {
+        if !self.branch(instr, f) {
+            // Skip over delay slot instruction when not branching
+            self.reg_pc = self.reg_pc.wrapping_add(4);
+        }
     }
 
     fn read_word(&self, virt_addr: u64) -> u32 {
         let phys_addr = self.virt_addr_to_phys_addr(virt_addr);
-        // TODO: Check endianness
         self.interconnect.read_word(phys_addr as u32)
+    }
+
+    fn write_word(&mut self, virt_addr: u64, value: u32) {
+        let phys_addr = self.virt_addr_to_phys_addr(virt_addr);
+        self.interconnect.write_word(phys_addr as u32, value)
     }
 
 
@@ -249,5 +222,63 @@ impl Cpu {
             0 => 0,
             _ => self.reg_gpr[index]
         }
+    }
+}
+
+//// Para presentar adecuadamente los registros, cambio el macro try! por ?
+impl fmt::Debug for Cpu {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        const REGS_PER_LINE: usize = 2;
+        const REG_NAMES: [&'static str; NUM_GPR] = [
+            "r0", "at", "v0", "v1", "a0", "a1", "a2", "a3",
+            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
+            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
+            "t8", "t9", "k0", "k1", "gp", "sp", "s8", "ra",
+        ];
+
+        write!(f, "\nCPU General Purpose Registers:")?;
+        for reg_num in 0..NUM_GPR {
+            if (reg_num % REGS_PER_LINE) == 0 {
+                writeln!(f, "")?;
+            }
+            write!(f,
+                   "{reg_name}/gpr{num:02}: {value:#018X} ",
+                   num = reg_num,
+                   reg_name = REG_NAMES[reg_num],
+                   value = self.reg_gpr[reg_num],
+            )?;
+        }
+
+        write!(f, "\n\nCPU Floating Point Registers:")?;
+        for reg_num in 0..NUM_GPR {
+            if (reg_num % REGS_PER_LINE) == 0 {
+                writeln!(f, "")?;
+            }
+            write!(f,
+                   "fpr{num:02}: {value:21} ",
+                   num = reg_num,
+                   value = self.reg_fpr[reg_num], )?;
+        }
+
+        writeln!(f, "\n\nCPU Special Registers:")?;
+        writeln!(f,
+                 "\
+            reg_pc: {:#018X}\n\
+            reg_hi: {:#018X}\n\
+            reg_lo: {:#018X}\n\
+            reg_llbit: {}\n\
+            reg_fcr0:  {:#010X}\n\
+            reg_fcr31: {:#010X}\n\
+            ",
+                 self.reg_pc,
+                 self.reg_hi,
+                 self.reg_lo,
+                 self.reg_llbit,
+                 self.reg_fcr0,
+                 self.reg_fcr31
+        )?;
+
+        writeln!(f, "{:#?}", self.cp0)?;
+        writeln!(f, "{:#?}", self.interconnect)
     }
 }

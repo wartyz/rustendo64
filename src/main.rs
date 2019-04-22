@@ -8,6 +8,9 @@ mod cpu;
 mod interconnect;
 mod mem_map;
 mod rsp;
+mod audio_interface;
+mod video_interface;
+mod peripheral_interface;
 
 use std::env;
 use std::fs;
@@ -22,7 +25,7 @@ fn main() {
     let rom = read_bin(rom_file_name); // Lee ROM
 
     let mut n64 = n64::N64::new(pif);
-    //n64.power_on_reset();
+
     loop {
         //println!("N64: {:#?}", &n64);
         n64.run_instruction(); // Ejecuta solo una instrucción

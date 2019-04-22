@@ -11,8 +11,12 @@ enum_from_primitive! { // Devuelve un Option<Self>
 
         Mtc0 = 0b010000,
 
+        Bne = 0b000101,
         Beql = 0b010100,
+        Bnel = 0b010101,
 
         Lw = 0b100011,
+
+        Sw = 0b101011,
     }
 }

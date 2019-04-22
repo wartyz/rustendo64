@@ -6,7 +6,7 @@ use num::FromPrimitive;
 
 use super::opcode::Opcode;
 
-
+#[derive(Clone, Copy)]
 pub struct Instruction(pub u32);
 
 impl Instruction {
