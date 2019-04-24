@@ -2,6 +2,14 @@ const PIF_ROM_START: u32 = 0x1fc0_0000;
 const PIF_ROM_LENGTH: u32 = 0x0000_07c0;
 const PIF_ROM_END: u32 = PIF_ROM_START + PIF_ROM_LENGTH - 1;
 
+const PIF_RAM_START: u32 = 0x1fc0_07c0;
+pub const PIF_RAM_LENGTH: u32 = 0x0000_0040;
+const PIF_RAM_END: u32 = PIF_RAM_START + PIF_RAM_LENGTH - 1;
+
+const CART_DOM1_ADDR2_START: u32 = 0x1000_0000;
+const CART_DOM1_ADDR2_LENGTH: u32 = 0x0fc0_0000;
+const CART_DOM1_ADDR2_END: u32 = CART_DOM1_ADDR2_START + CART_DOM1_ADDR2_LENGTH - 1;
+
 const SP_IMEM_START: u32 = 0x0400_1000;
 pub const SP_IMEM_LENGTH: u32 = 0x0000_1000;
 const SP_IMEM_END: u32 = SP_IMEM_START + SP_IMEM_LENGTH - 1;
@@ -21,11 +29,22 @@ const VI_H_START_REG: u32 = 0x0440_0024;
 
 const PI_BASE_REG: u32 = 0x0460_0000;
 const PI_STATUS_REG: u32 = 0x0460_0010;
+const PI_BSD_DOM1_LAT_REG: u32 = 0x0460_0014;
+const PI_BSD_DOM1_PWD_REG: u32 = 0x0460_0018;
+const PI_BSD_DOM1_PGS_REG: u32 = 0x0460_001c;
+const PI_BSD_DOM1_RLS_REG: u32 = 0x0460_0020;
+
+const SI_BASE_REG: u32 = 0x0480_0000;
+const SI_STATUS_REG: u32 = 0x0480_0018;
 
 pub enum Addr {
     PifRom(u32),
+    PifRam(u32),
+
+    CartDom1(u32),
 
     SpImem(u32),
+
     SpSatusReg,
     SpDmaBusyReg,
 
@@ -37,6 +56,12 @@ pub enum Addr {
     ViHStartReg,
 
     PiStatusReg,
+    PiBsdDom1LatReg,
+    PiBsdDom1PwdReg,
+    PiBsdDom1PgsReg,
+    PiBsdDom1RlsReg,
+
+    SiStatusReg,
 }
 
 
@@ -44,6 +69,11 @@ pub fn map_addr(addr: u32) -> Addr {
     match addr {
         PIF_ROM_START...PIF_ROM_END =>
             Addr::PifRom(addr - PIF_ROM_START),
+        PIF_RAM_START...PIF_RAM_END =>
+            Addr::PifRam(addr - PIF_RAM_START),
+
+        CART_DOM1_ADDR2_START...CART_DOM1_ADDR2_END =>
+            Addr::CartDom1(addr - CART_DOM1_ADDR2_START),
 
         SP_IMEM_START...SP_IMEM_END =>
             Addr::SpImem(addr - SP_IMEM_START),
@@ -59,6 +89,12 @@ pub fn map_addr(addr: u32) -> Addr {
         VI_H_START_REG => Addr::ViHStartReg,
 
         PI_STATUS_REG => Addr::PiStatusReg,
+        PI_BSD_DOM1_LAT_REG => Addr::PiBsdDom1LatReg,
+        PI_BSD_DOM1_PWD_REG => Addr::PiBsdDom1PwdReg,
+        PI_BSD_DOM1_PGS_REG => Addr::PiBsdDom1PgsReg,
+        PI_BSD_DOM1_RLS_REG => Addr::PiBsdDom1RlsReg,
+
+        SI_STATUS_REG => Addr::SiStatusReg,
 
         _ => panic!("Unrecognized physical address: {:#x}", addr)
     }

@@ -4,7 +4,7 @@ extern crate num;
 
 use num::FromPrimitive;
 
-use super::opcode::Opcode;
+use super::opcode::*;
 
 #[derive(Clone, Copy)]
 pub struct Instruction(pub u32);
@@ -12,8 +12,9 @@ pub struct Instruction(pub u32);
 impl Instruction {
     #[inline(always)]
     pub fn opcode(&self) -> Opcode {
-        Opcode::from_u32((self.0 >> 26) & 0b111111).unwrap_or_else(
-            || panic!("Unrecognized instruction: {:#x}", self.0))
+        let value = (self.0 >> 26) & 0b111111;
+        Opcode::from_u32(value).unwrap_or_else(
+            || panic!("Unrecognized instruction: {:#010x} (op: {:#08b})", self.0, value))
     }
 
     #[inline(always)]
@@ -29,6 +30,11 @@ impl Instruction {
     #[inline(always)]
     pub fn rd(&self) -> u32 {
         (self.0 >> 11) & 0b11111
+    }
+
+    #[inline(always)]
+    pub fn sa(&self) -> u32 {
+        (self.0 >> 6) & 0b11111
     }
 
     #[inline(always)]
@@ -49,6 +55,13 @@ impl Instruction {
     #[inline(always)]
     pub fn offset_sign_extended(&self) -> u64 {
         (self.offset() as i16) as u64
+    }
+
+    #[inline(always)]
+    pub fn special_op(&self) -> SpecialOpcode {
+        let value = self.0 & 0b111111;
+        SpecialOpcode::from_u32(value).unwrap_or_else(
+            || panic!("Unrecognized special opcode: {:#010x} (op: {:#08b})", self.0, value))
     }
 }
 

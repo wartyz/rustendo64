@@ -1,6 +1,7 @@
 use std::fmt;
 use super::cp0;
 use super::opcode::Opcode::*;
+use super::opcode::SpecialOpcode::*;
 use super::super::interconnect;
 use super::instruction::Instruction;
 //use std::intrinsics::init;
@@ -86,6 +87,28 @@ impl Cpu {
         //          XXXXXX XXXXXXXXXXXXXXXXXXXXXXXXXX
 
         match instr.opcode() {
+            Special => match instr.special_op() {
+                Srl => {
+                    let value = self.read_reg_gpr(instr.rt()) >> instr.sa();
+
+                    let sign_extended_value = (value as i32) as u64;
+                    self.write_reg_gpr(instr.rd() as usize, sign_extended_value);
+                }
+                Jr => {
+                    let delay_slot_pc = self.reg_pc;
+
+                    // Update PC before executing delay slot instruction
+                    self.reg_pc = self.read_reg_gpr(instr.rs());
+
+                    let delay_slot_instr = self.read_instruction(delay_slot_pc);
+                    self.execute_instruction(delay_slot_instr);
+                }
+                Or => {
+                    let value = self.read_reg_gpr(instr.rs()) |
+                        self.read_reg_gpr(instr.rt());
+                    self.write_reg_gpr(instr.rd() as usize, value);
+                }
+            }
             // Tipo I, R[rt] = R[rs] + SignExtImm
             Addi => {
                 // TODO: Handle exception overflow
@@ -123,10 +146,11 @@ impl Cpu {
                 self.cp0.write_reg(instr.rd(), data);
             }
 
+            Beq => { self.branch(instr, |rs, rt| rs == rt); }
             Bne => { self.branch(instr, |rs, rt| rs != rt); }
+
             // Tipo I, if(R[rs] == R[rt] -> PC = PC + 4 + BranchAddr
             Beql => self.branch_likely(instr, |rs, rt| rs == rt),
-
             // Tipo I, if(R[rs] != R[rt] -> PC = PC + 4 + BranchAddr
             Bnel => self.branch_likely(instr, |rs, rt| rs != rt),
 
@@ -140,6 +164,8 @@ impl Cpu {
                 let mem = (self.read_word(virt_addr) as i32) as u64;
                 self.write_reg_gpr(instr.rt(), mem);
             }
+
+
             // Tipo I, M[R[rs]+SignExtImm] = R[rt]
             Sw => {
                 let base = instr.rs();
@@ -162,7 +188,7 @@ impl Cpu {
         let is_taken = f(rs, rt);
 
         if is_taken {
-            let old_pc = self.reg_pc;
+            let delay_slot_pc = self.reg_pc;
 
             let sign_extended_offset =
                 instr.offset_sign_extended() << 2;
@@ -170,7 +196,7 @@ impl Cpu {
             self.reg_pc =
                 self.reg_pc.wrapping_add(sign_extended_offset);
 
-            let delay_slot_instr = self.read_instruction(old_pc);
+            let delay_slot_instr = self.read_instruction(delay_slot_pc);
             self.execute_instruction(delay_slot_instr);
         }
 
