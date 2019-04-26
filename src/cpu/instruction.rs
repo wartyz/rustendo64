@@ -1,10 +1,8 @@
 use std::fmt;
 
-extern crate num;
+use super::opcode::*;
 
 use num::FromPrimitive;
-
-use super::opcode::*;
 
 #[derive(Clone, Copy)]
 pub struct Instruction(pub u32);
@@ -63,10 +61,20 @@ impl Instruction {
         SpecialOpcode::from_u32(value).unwrap_or_else(
             || panic!("Unrecognized special opcode: {:#010x} (op: {:#08b})", self.0, value))
     }
+
+    #[inline(always)]
+    pub fn reg_imm_op(&self) -> RegImmOpcode {
+        let value = (self.0 >> 16) & 0b11111;
+        RegImmOpcode::from_u32(value).unwrap_or_else(
+            || panic!("Unrecognized reg imm opcode: {:#010x} (op: {:#08b})", self.0, value))
+    }
 }
 
 impl fmt::Debug for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self.opcode())
+        match self.opcode() {
+            Opcode::Special => write!(f, "{:?}", self.special_op()),
+            _ => write!(f, "{:?}", self.opcode())
+        }
     }
 }

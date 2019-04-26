@@ -2,6 +2,7 @@ use byteorder::{BigEndian, ByteOrder};
 
 use super::mem_map::*;
 use super::rsp::Rsp;
+use super::rdp::Rdp;
 use super::pif::Pif;
 use super::peripheral_interface::PeripheralInterface;
 use super::video_interface::VideoInterface;
@@ -14,7 +15,9 @@ const RDRAM_SIZE: usize = 4 * 1024 * 1024; // 4 Megas
 
 pub struct Interconnect {
     pif: Pif,
+
     rsp: Rsp,
+    rdp: Rdp,
 
     ai: AudioInterface,
     vi: VideoInterface,
@@ -32,6 +35,8 @@ impl Interconnect {
     pub fn new(boot_rom: Box<[u8]>, cart_rom: Box<[u8]>) -> Interconnect {
         Interconnect {
             pif: Pif::new(boot_rom),
+
+            rdp: Rdp,
             rsp: Rsp::new(),
 
             ai: AudioInterface::default(),
@@ -57,10 +62,13 @@ impl Interconnect {
             Addr::CartDom1(offset) =>
                 BigEndian::read_u32(&self.cart_rom[offset as usize..]),
 
+            Addr::SpDmem(offset) => self.rsp.read_dmem(offset),
             Addr::SpImem(offset) => self.rsp.read_imem(offset),
 
-            Addr::SpSatusReg => self.rsp.read_status_reg(),
+            Addr::SpStatusReg => self.rsp.read_status_reg(),
             Addr::SpDmaBusyReg => self.rsp.read_dma_busy_reg(),
+
+            Addr::DpcStatusReg => self.rdp.read_status_reg(),
 
             Addr::AiDramAddrReg => self.ai.read_dram_addr_reg(),
             Addr::AiLenReg => self.ai.read_len_reg(),
@@ -75,7 +83,7 @@ impl Interconnect {
             Addr::PiBsdDom1PgsReg => self.pi.read_bsd_dom1_pgs_reg(),
             Addr::PiBsdDom1RlsReg => self.pi.read_bsd_dom1_rls_reg(),
 
-            Addr::SiStatusReg => self.si.read_status_reg(),
+            Addr::SiStatusReg => self.si.read_status_reg()
         }
     }
     /// Escribe 32 bits de memoria
@@ -86,10 +94,13 @@ impl Interconnect {
 
             Addr::CartDom1(offset) => panic!("Cannot write to cart ROM"),
 
+            Addr::SpDmem(offset) => self.rsp.write_dmem(offset, value),
             Addr::SpImem(offset) => self.rsp.write_imem(offset, value),
 
-            Addr::SpSatusReg => self.rsp.write_status_reg(value),
+            Addr::SpStatusReg => self.rsp.write_status_reg(value),
             Addr::SpDmaBusyReg => self.rsp.write_dma_busy_reg(value),
+
+            Addr::DpcStatusReg => self.rdp.write_status_reg(value),
 
             Addr::AiDramAddrReg => self.ai.write_dram_addr_reg(value),
             Addr::AiLenReg => self.ai.write_len_reg(value),
@@ -104,7 +115,7 @@ impl Interconnect {
             Addr::PiBsdDom1PgsReg => self.pi.write_bsd_dom1_pgs_reg(value),
             Addr::PiBsdDom1RlsReg => self.pi.write_bsd_dom1_rls_reg(value),
 
-            Addr::SiStatusReg => self.si.write_status_reg(value),
+            Addr::SiStatusReg => self.si.write_status_reg(value)
         }
     }
 }
