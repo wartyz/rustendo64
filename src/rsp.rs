@@ -46,7 +46,6 @@ impl Rsp {
     }
 
     pub fn write_status_reg(&mut self, value: u32) {
-
         // TODO: What happens if both a set and clear bit are set?
         if (value & (1 << 0)) != 0 {
             self.halt = false;
@@ -74,6 +73,6 @@ impl Rsp {
     }
 
     pub fn write_dma_busy_reg(&self, value: u32) {
-        panic!("Attempted write to SP_DMA_BUSY: {:#?}", value)
+        panic!("Attempted write to SP_DMA_BUSY: {:#?}", value);
     }
 }

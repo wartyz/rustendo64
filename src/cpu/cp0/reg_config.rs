@@ -7,7 +7,6 @@ pub struct RegConfig {
     endianness: Endianness,
     cu: bool,
     kseg0_cache_enable_bits: [bool; 3],
-    //kseg0_cache_enabled: bool,
 }
 
 impl RegConfig {

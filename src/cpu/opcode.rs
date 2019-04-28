@@ -1,4 +1,4 @@
-enum_from_primitive! { // Devuelve un Option<Self>
+enum_from_primitive! {
     #[derive(Debug)]
     pub enum Opcode {
         Special = 0b000000,
@@ -21,12 +21,12 @@ enum_from_primitive! { // Devuelve un Option<Self>
 
         Lw =      0b100011,
 
-        Sw = 0b101011
+        Sw =      0b101011
     }
 }
 
-enum_from_primitive! { // Devuelve un Option<Self>
-# [derive(Debug)]
+enum_from_primitive! {
+    #[derive(Debug)]
     pub enum SpecialOpcode {
         Sll =   0b000000,
 
@@ -50,7 +50,7 @@ enum_from_primitive! { // Devuelve un Option<Self>
         Or =    0b100101,
         Xor =   0b100110,
 
-        Stlu = 0b101011
+        Sltu =  0b101011
     }
 }
 
