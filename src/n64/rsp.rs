@@ -1,5 +1,5 @@
 use super::mem_map::*;
-use super::byteorder::{BigEndian, ByteOrder};
+use byteorder::{BigEndian, ByteOrder};
 
 pub struct Rsp {
     dmem: Box<[u8]>,
