@@ -20,10 +20,10 @@ enum WriteLink {
     No,
 }
 
-enum DelaySlot {
-    Yes,
-    No,
-}
+//enum DelaySlot {
+//    Yes,
+//    No,
+//}
 
 pub struct Cpu {
     // Arreglo de registros de proposito general
@@ -47,6 +47,8 @@ pub struct Cpu {
     cp0: cp0::Cp0,
 
     interconnect: interconnect::Interconnect,
+
+    delay_slot: Option<Instruction>,
 }
 
 
@@ -65,25 +67,25 @@ impl Cpu {
             cp0: cp0::Cp0::default(),
 
             interconnect: interconnect,
+
+            delay_slot: None,
+
         }
     }
 
-    // TODO: Different interface
-    pub fn run(&mut self) {
-        loop {
-            self.run_instruction();
+    pub fn step(&mut self) {
+        if let Some(instr) = self.delay_slot {
+            self.execute_instruction(instr);
+        } else {
+            let instr = self.read_instruction(self.reg_pc);
+
+            //self.print_instr(instr, self.reg_pc, DelaySlot::No);
+
+            self.reg_pc += 4;
+            self.execute_instruction(instr);
         }
     }
 
-    pub fn run_instruction(&mut self) {
-        let instr = self.read_instruction(self.reg_pc);
-
-        //println!("reg_pc {:#018X}: {:?}", self.reg_pc, instr);
-        self.print_instr(instr, self.reg_pc, DelaySlot::No);
-
-        self.reg_pc += 4;
-        self.execute_instruction(instr);
-    }
 
     fn read_instruction(&self, addr: u64) -> Instruction {
         Instruction(self.read_word(addr))
@@ -135,9 +137,7 @@ impl Cpu {
                         // Update PC before executing delay slot instruction
                         self.reg_pc = self.read_reg_gpr(instr.rs());
 
-                        //let delay_slot_instr = self.read_instruction(delay_slot_pc);
-                        //self.execute_instruction(delay_slot_instr);
-                        self.execute_delay_slot(delay_slot_pc);
+                        self.store_delay_slot(delay_slot_pc);
                     }
 
                     Multu => {
@@ -181,37 +181,6 @@ impl Cpu {
                 }
             }
 
-            // Tipo I, R[rt] = R[rs] + SignExtImm
-//            Addi => {
-//                // TODO: Handle overflow exception
-//                // DA ERROR DE OVERFLOW SIN OPCIÓN DEL COMPILADOR --release
-//                let res =
-//                    self.read_reg_gpr(instr.rs()) + instr.imm_sign_extended();
-//                self.write_reg_gpr(instr.rt(), res);
-//            }
-//            // Tipo I, R[rt] = R[rs] + SignExtImm
-//            Addiu => {
-//                let res = self.read_reg_gpr(instr.rs())
-//                    .wrapping_add(instr.imm_sign_extended());
-//                self.write_reg_gpr(instr.rt(), res);
-//            }
-//            // Tipo I, R[rt] = R[rs] & ZeroExtImm
-//            Andi => {
-//                let res = self.read_reg_gpr(instr.rs()) &
-//                    (instr.imm() as u64);
-//                self.write_reg_gpr(instr.rt(), res);
-//            }
-//            // Tipo I, R[rt] = R[rs] | ZeroExtImm
-//            Ori => {
-//                let res = self.read_reg_gpr(instr.rs()) |
-//                    (instr.imm() as u64);
-//                self.write_reg_gpr(instr.rt(), res);
-//            }
-//            // Tipo I, R[rt] = {imm, 16'b0}
-//            Lui => {
-//                let value = ((instr.imm() << 16) as i32) as u64;
-//                self.write_reg_gpr(instr.rt(), value);
-//            }
             // Tipo I, R[rt] = R[rs] + SignExtImm
             Addi =>
                 self.imm_instr(instr, SignExtendResult::Yes, |rs, _, imm_sign_extended| {
@@ -307,7 +276,9 @@ impl Cpu {
             // Update PC before executing delay slot instruction
             self.reg_pc = self.reg_pc.wrapping_add(sign_extended_offset);
 
-            self.execute_delay_slot(delay_slot_pc);
+            self.store_delay_slot(delay_slot_pc);
+
+            //self.execute_delay_slot(delay_slot_pc);
         }
 
         is_taken
@@ -320,24 +291,28 @@ impl Cpu {
         }
     }
 
-    fn print_instr(&self, instr: Instruction, pc: u64, delay_slot: DelaySlot) {
-        print!("reg_pc {:018X}: ", pc);
-        match instr.opcode() {
-            Special => print!("Special: {:?}", instr.special_op()),
-            RegImm => print!("RegImm: {:?}", instr.reg_imm_op()),
-            _ => print!("{:?}", instr)
-        }
-        match delay_slot {
-            DelaySlot::Yes => println!(" (DELAY)"),
-            _ => println!("")
-        };
+//    fn print_instr(&self, instr: Instruction, pc: u64, delay_slot: DelaySlot) {
+//        print!("reg_pc {:018X}: ", pc);
+//        match instr.opcode() {
+//            Special => print!("Special: {:?}", instr.special_op()),
+//            RegImm => print!("RegImm: {:?}", instr.reg_imm_op()),
+//            _ => print!("{:?}", instr)
+//        }
+//        match delay_slot {
+//            DelaySlot::Yes => println!(" (DELAY)"),
+//            _ => println!("")
+//        };
+//    }
+
+    fn store_delay_slot(&mut self, delay_slot_pc: u64) {
+        self.delay_slot = Some(self.read_instruction(delay_slot_pc));
     }
 
-    fn execute_delay_slot(&mut self, delay_slot_pc: u64) {
-        let delay_slot_instr = self.read_instruction(delay_slot_pc);
-        self.print_instr(delay_slot_instr, delay_slot_pc, DelaySlot::Yes);
-        self.execute_instruction(delay_slot_instr);
-    }
+//    fn execute_delay_slot(&mut self, delay_slot_pc: u64) {
+//        let delay_slot_instr = self.read_instruction(delay_slot_pc);
+//        self.print_instr(delay_slot_instr, delay_slot_pc, DelaySlot::Yes);
+//        self.execute_instruction(delay_slot_instr);
+//    }
 
 
     fn read_word(&self, virt_addr: u64) -> u32 {
