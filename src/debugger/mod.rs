@@ -26,12 +26,26 @@ impl Debugger {
 
             match command {
                 Ok(Command::Step) => self.step(),
-                _ => println!("Invalid input")
+                Ok(Command::Exit) => break,
+                Err(_) => println!("Invalid input")
             }
         }
     }
 
     pub fn step(&mut self) {
+        print!("{:018X}: ", self.n64.cpu().reg_pc());
+
+//        match instr.opcode() {
+//            Special => print!("Special: {:?}", instr.special_op()),
+//            RegImm => print!("RegImm: {:?}", instr.reg_imm_op()),
+//            _ => print!("{:?}", instr)
+//        }
+//        match delay_slot {
+//            DelaySlot::Yes => println!(" (DELAY)"),
+//            _ => println!("")
+//        };
+        // Print next PC/instruction
+
         self.n64.step();
     }
 }
@@ -39,5 +53,24 @@ impl Debugger {
 fn read_stdin() -> String {
     let mut input = String::new();
     stdin().read_line(&mut input).unwrap();
-    return input.trim().into();
+    input.trim().into()
 }
+
+//enum DelaySlot {
+//    Yes,
+//    No,
+//}
+
+// TODO: Move elsewhere
+//fn print_instr(instr: Instruction, pc: u64, delay_slot: DelaySlot) {
+//    print!("reg_pc {:018X}: ", pc);
+//    match instr.opcode() {
+//        Special => print!("Special: {:?}", instr.special_op()),
+//        RegImm => print!("RegImm: {:?}", instr.reg_imm_op()),
+//        _ => print!("{:?}", instr)
+//    }
+//    match delay_slot {
+//        DelaySlot::Yes => println!(" (DELAY)"),
+//        _ => println!("")
+//    };
+//}
