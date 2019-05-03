@@ -53,6 +53,10 @@ impl Interconnect {
         }
     }
 
+    pub fn pif(&self) -> &Pif {
+        &self.pif
+    }
+
     /// Lee 32 bits de memoria fisica (no virtual)
     pub fn read_word(&self, addr: u32) -> u32 {
         match map_addr(addr) {

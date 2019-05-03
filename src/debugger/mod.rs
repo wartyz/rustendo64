@@ -1,50 +1,77 @@
 mod command;
 
 use super::n64::*;
+use super::cpu::opcode::Opcode::*;
+use super::cpu::instruction::*;
+use super::n64::mem_map::*;
+use super::n64::mem_map::Addr::*;
+
 use self::command::*;
 
 use std::io::*;
 
 pub struct Debugger {
-    n64: N64
+    n64: N64,
+
+    last_command: Option<Command>,
 }
 
 impl Debugger {
     pub fn new(n64: N64) -> Debugger {
         Debugger {
-            n64: n64
+            n64: n64,
+
+            last_command: None,
         }
     }
 
     pub fn run(&mut self) {
         loop {
-            //self.n64.run_instruction();
             print!("r64> ");
             stdout().flush().unwrap();
 
-            let command = read_stdin().parse();
+            let command = match (read_stdin().parse(), self.last_command) {
+                (Ok(Command::Repeat), Some(c)) => Ok(c),
+                (Ok(Command::Repeat), None) => Err("No last command"),
+                (Ok(c), _) => Ok(c),
+                (Err(_), _) => Err("Invalid input"),
+            };
 
             match command {
                 Ok(Command::Step) => self.step(),
                 Ok(Command::Exit) => break,
-                Err(_) => println!("Invalid input")
+                Ok(Command::Repeat) => unreachable!(),
+                Err(e) => println!("{}", e)
             }
+
+
+            self.last_command = command.ok();
         }
     }
 
-    pub fn step(&mut self) {
-        print!("{:018X}: ", self.n64.cpu().reg_pc());
 
-//        match instr.opcode() {
-//            Special => print!("Special: {:?}", instr.special_op()),
-//            RegImm => print!("RegImm: {:?}", instr.reg_imm_op()),
-//            _ => print!("{:?}", instr)
-//        }
-//        match delay_slot {
-//            DelaySlot::Yes => println!(" (DELAY)"),
-//            _ => println!("")
-//        };
-        // Print next PC/instruction
+    pub fn step(&mut self) {
+        let current_pc = self.n64.cpu().current_pc_phys();
+        let addr = map_addr(current_pc as u32);
+        let instr = Instruction(match addr {
+            PifRom(offset) => self.n64.interconnect().pif().read_boot_rom(offset),
+            _ => panic!("Debugger can't inspect address: {:?}", addr)
+        });
+        print!("{:018X}: ", current_pc);
+
+
+        match instr.opcode() {
+            Special => print!("{:?} (Special)", instr.special_op()),
+            RegImm => print!("{:?} (RegImm)", instr.reg_imm_op()),
+            _ => print!("{:?}", instr)
+        }
+        println!("");
+
+        if self.n64.cpu().will_execute_from_delay_slot() {
+            println!(" (DELAY)");
+        } else {
+            println!("");
+        }
 
         self.n64.step();
     }
