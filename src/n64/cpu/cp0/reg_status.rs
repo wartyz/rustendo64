@@ -107,7 +107,7 @@ impl From<u32> for TLBGeneralExceptionVectorLocation {
         match (value >> 22) & 0b1 {
             0 => TLBGeneralExceptionVectorLocation::Normal,
             1 => TLBGeneralExceptionVectorLocation::Bootstrap,
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
@@ -162,7 +162,7 @@ impl From<u32> for Mode {
             0b00 => Mode::Kernel,
             0b01 => Mode::Supervisor,
             0b10 => Mode::User,
-            _ => panic!("Invalid cp0 KSU bits: {:#b}", value)
+            _ => panic!("Invalid cp0 KSU bits: {:#b}", value),
         }
     }
 }

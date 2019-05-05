@@ -1,6 +1,4 @@
-use super::cpu::*;
-use super::interconnect::*;
-use core::num::FpCategory::Infinite;
+use super::{Cpu, Interconnect};
 
 #[derive(Debug)]
 pub struct N64 {

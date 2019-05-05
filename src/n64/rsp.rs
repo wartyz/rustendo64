@@ -1,4 +1,4 @@
-use super::mem_map::*;
+use super::mem_map::{SP_DMEM_LENGTH, SP_IMEM_LENGTH};
 use byteorder::{BigEndian, ByteOrder};
 
 pub struct Rsp {

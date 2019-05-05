@@ -1,6 +1,6 @@
 use byteorder::{BigEndian, ByteOrder};
 
-use super::mem_map::*;
+use super::mem_map::PIF_RAM_LENGTH;
 
 pub struct Pif {
     boot_rom: Box<[u8]>,

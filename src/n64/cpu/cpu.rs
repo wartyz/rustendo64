@@ -1,12 +1,14 @@
-use super::super::interconnect::*;
-use super::cp0;
+use super::{cp0, Instruction};
 use super::opcode::Opcode::*;
-use super::opcode::SpecialOpcode::*;
+//use super::opcode::SpecialOpcode::*;
 use super::opcode::RegImmOpcode::*;
-use super::instruction::Instruction;
+//use super::instruction::Instruction;
+use super::opcode::SpecialOpcode::*;
+//use super::super::Interconnect;
+use super::super::interconnect::Interconnect;
 
 use std::fmt;
-use crate::n64::interconnect::Interconnect;
+//use crate::n64::interconnect::Interconnect;
 
 
 const NUM_GPR: usize = 32; // 32 registros
@@ -346,7 +348,7 @@ impl fmt::Debug for Cpu {
             "t8", "t9", "k0", "k1", "gp", "sp", "s8", "ra",
         ];
 
-        write!(f, "\nCPU General Purpose Registers:")?;
+        write!(f, " \nCPU General Purpose Registers:")?;
         for reg_num in 0..NUM_GPR {
             if (reg_num % REGS_PER_LINE) == 0 {
                 writeln!(f, "")?;
